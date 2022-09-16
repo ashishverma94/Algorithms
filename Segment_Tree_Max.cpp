@@ -1,58 +1,45 @@
-#include<bits/stdc++.h>
-using namespace std ;
-const int N = 1e5 ;
-int arr[N] , seg_tree[4*N] ;
+class SGTree {
+	vector<int> seg;
+public:
+	SGTree(int n) {
+		seg.resize(4 * n + 1);
+	}
 
-int query ( int index , int low , int high , int l , int r )
-{
-    if ( low >= l && high <= r )
-        return seg_tree[index] ;
-    if ( high < l || low > r )
-        return INT_MIN ;
-    int mid = low + ( high-low) / 2 ;
-    int left  = query( 2*index+1 , low ,    mid , l , r ) ;
-    int right = query( 2*index+2 , mid+1 , high , l , r ) ;
-    
-    return max( left , right ) ;
-}
+	void build(int ind, int low, int high, int arr[] ) {
+		if (low == high) {
+			seg[ind] = arr[low];
+			return;
+		}
 
-void buildSegTree( int index , int low , int high )
-{
-    if ( low == high )
-    {
-        seg_tree[index] = arr[low] ;
-        return ;
-    }
-    
-    int mid = low + ( high-low) / 2 ;
-    buildSegTree( 2*index+1 , low , mid ) ;
-    buildSegTree( 2*index+2 , mid+1 , high ) ;
-    
-    seg_tree[index] = max( seg_tree[2*index+1] , seg_tree[2*index+2] ) ;
-}
+		int mid = (low + high) / 2;
+		build(2 * ind + 1, low, mid, arr);
+		build(2 * ind + 2, mid + 1, high, arr);
+		seg[ind] = min(seg[2 * ind + 1], seg[2 * ind + 2]);
+	}
 
-int main()
-{
-    // Filling Array
-    int n ;
-    cin>>n;
-    
-    for ( int i = 0 ; i < n ; i++ )
-        cin>>arr[i] ;
-        
-    // Build Segment tree 
-    buildSegTree( 0 , 0 , n-1 ) ;
-    
-    // Answer Queries
-    int q ;
-    cin>>q ;
-    
-    while(q--)
-    {
-        int l , r ;
-        cin>>l>>r ;
-        
-        cout<<query( 0 , 0 , n-1 , l , r ) <<endl;
-    }
-    return 0 ;
-}
+	int query(int ind, int low, int high, int l, int r) {
+		// no overlap
+		// l r low high or low high l r
+		if (r < low || high < l) return INT_MAX;
+
+		// complete overlap
+		// [l low high r]
+		if (low >= l && high <= r) return seg[ind];
+
+		int mid = (low + high) >> 1;
+		int left = query(2 * ind + 1, low, mid, l, r);
+		int right = query(2 * ind + 2, mid + 1, high, l, r);
+		return min(left, right);
+	}
+	void update(int ind, int low, int high, int i, int val) {
+		if (low == high) {
+			seg[ind] = val;
+			return;
+		}
+
+		int mid = (low + high) >> 1;
+		if (i <= mid) update(2 * ind + 1, low, mid, i, val);
+		else update(2 * ind + 2, mid + 1, high, i, val);
+		seg[ind] = min(seg[2 * ind + 1], seg[2 * ind + 2]);
+	}
+};
